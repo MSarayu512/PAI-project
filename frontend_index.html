@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PAI Urban Agent — City Decision Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#0d0f14;
+  --surface:#161a24;
+  --card:#1d2233;
+  --border:#2a3045;
+  --accent:#00e5c3;
+  --accent2:#6c7cff;
+  --accent3:#ff6b6b;
+  --accent4:#ffd166;
+  --text:#e8eaf2;
+  --muted:#7a8099;
+  --mono:'Space Mono',monospace;
+  --sans:'DM Sans',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;}
+
+/* ── Header ── */
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 32px;
+  border-bottom:1px solid var(--border);
+  background:rgba(22,26,36,0.95);
+  backdrop-filter:blur(10px);
+  position:sticky;top:0;z-index:100;
+}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);
+  box-shadow:0 0 12px var(--accent);animation:pulse 2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.logo-text{font-family:var(--mono);font-size:13px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;}
+.header-meta{font-size:11px;color:var(--muted);font-family:var(--mono);}
+
+/* ── Layout ── */
+.layout{display:grid;grid-template-columns:260px 1fr 320px;gap:0;height:calc(100vh - 57px);}
+
+/* ── Sidebar ── */
+.sidebar{
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  overflow-y:auto;
+  padding:20px 16px;
+  display:flex;flex-direction:column;gap:6px;
+}
+.sidebar-section{
+  font-family:var(--mono);font-size:10px;
+  color:var(--muted);letter-spacing:2px;
+  padding:12px 8px 6px;text-transform:uppercase;
+}
+.tab{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;border-radius:8px;
+  cursor:pointer;font-size:13px;font-weight:500;
+  transition:all .15s;border:1px solid transparent;
+}
+.tab:hover{background:var(--card);border-color:var(--border);}
+.tab.active{background:rgba(0,229,195,.08);border-color:rgba(0,229,195,.3);color:var(--accent);}
+.tab-icon{width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;}
+.tab-badge{margin-left:auto;font-size:10px;font-family:var(--mono);
+  background:rgba(0,229,195,.15);color:var(--accent);
+  padding:2px 6px;border-radius:4px;}
+
+/* ── Config panel ── */
+.config{padding:16px;border-top:1px solid var(--border);margin-top:auto;}
+.config-title{font-family:var(--mono);font-size:10px;color:var(--muted);
+  letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;}
+.form-row{margin-bottom:10px;}
+.form-label{font-size:11px;color:var(--muted);margin-bottom:4px;display:block;}
+select, input[type=number], input[type=range]{
+  width:100%;background:var(--bg);border:1px solid var(--border);
+  color:var(--text);border-radius:6px;padding:7px 10px;font-size:12px;
+  font-family:var(--sans);outline:none;
+}
+select:focus,input:focus{border-color:var(--accent);}
+input[type=range]{padding:4px 0;cursor:pointer;accent-color:var(--accent);}
+.run-btn{
+  width:100%;padding:11px;background:var(--accent);color:#0d0f14;
+  border:none;border-radius:8px;font-size:13px;font-weight:700;
+  cursor:pointer;font-family:var(--mono);letter-spacing:1px;
+  transition:all .15s;margin-top:4px;
+}
+.run-btn:hover{filter:brightness(1.1);}
+.run-btn:active{transform:scale(.98);}
+.run-btn:disabled{opacity:.4;cursor:not-allowed;}
+
+/* ── Main canvas ── */
+.main{overflow:hidden;display:flex;flex-direction:column;background:var(--bg);}
+.canvas-header{
+  padding:16px 24px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--surface);
+}
+.canvas-title{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:1px;}
+.status-chip{
+  font-size:11px;font-family:var(--mono);
+  padding:4px 10px;border-radius:20px;
+  border:1px solid var(--border);color:var(--muted);
+}
+.status-chip.ok{border-color:rgba(0,229,195,.4);color:var(--accent);background:rgba(0,229,195,.07);}
+.status-chip.running{border-color:rgba(255,209,102,.4);color:var(--accent4);background:rgba(255,209,102,.07);}
+
+svg#city{width:100%;height:100%;flex:1;}
+
+/* ── Graph SVG styles ── */
+.graph-edge{stroke:#2a3045;stroke-width:1.5;fill:none;transition:stroke .3s,stroke-width .3s;}
+.graph-edge.congested{stroke:#ff6b6b44;}
+.graph-edge.path-edge{stroke:var(--accent);stroke-width:3;filter:drop-shadow(0 0 4px var(--accent));}
+.graph-node{cursor:pointer;transition:all .2s;}
+.graph-node circle{stroke-width:2;transition:all .2s;}
+.graph-node:hover circle{stroke-width:3;filter:brightness(1.3);}
+.graph-node.start circle{stroke:var(--accent)!important;stroke-width:3;filter:drop-shadow(0 0 6px var(--accent));}
+.graph-node.goal circle{stroke:var(--accent3)!important;stroke-width:3;filter:drop-shadow(0 0 6px var(--accent3));}
+.graph-node.facility circle{stroke:var(--accent4)!important;stroke-width:3;fill:#ffd16622!important;filter:drop-shadow(0 0 6px var(--accent4));}
+.node-label{font-size:9px;fill:#7a8099;font-family:'Space Mono',monospace;pointer-events:none;}
+
+/* ── Zone colors ── */
+.zone-residential{fill:#4a90d944;}
+.zone-commercial{fill:#f5a62344;}
+.zone-industrial{fill:#7b7b7b44;}
+.zone-medical{fill:#d0021b44;}
+.zone-park{fill:#41750544;}
+
+/* ── Right panel ── */
+.panel{
+  background:var(--surface);
+  border-left:1px solid var(--border);
+  overflow-y:auto;
+  display:flex;flex-direction:column;
+}
+.panel-header{
+  padding:16px 20px;border-bottom:1px solid var(--border);
+  font-family:var(--mono);font-size:11px;color:var(--accent);
+  letter-spacing:2px;text-transform:uppercase;
+}
+.panel-body{padding:16px 20px;flex:1;}
+
+.metric-row{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;
+}
+.metric{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:12px;
+}
+.metric-label{font-size:10px;color:var(--muted);font-family:var(--mono);letter-spacing:1px;margin-bottom:4px;}
+.metric-value{font-size:20px;font-family:var(--mono);color:var(--accent);font-weight:700;}
+.metric-sub{font-size:10px;color:var(--muted);}
+
+.explain-box{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:14px;margin-bottom:12px;
+}
+.explain-title{font-size:10px;font-family:var(--mono);color:var(--accent2);
+  letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
+.explain-line{font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:2px;}
+.explain-line.highlight{color:var(--text);}
+.explain-line code{
+  font-family:var(--mono);font-size:11px;
+  background:rgba(108,124,255,.12);color:var(--accent2);
+  padding:1px 5px;border-radius:3px;
+}
+
+.path-steps{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;}
+.path-node{
+  font-family:var(--mono);font-size:11px;
+  padding:3px 8px;border-radius:4px;
+  background:rgba(0,229,195,.1);color:var(--accent);
+  border:1px solid rgba(0,229,195,.2);
+}
+.path-arrow{color:var(--muted);font-size:10px;align-self:center;}
+
+.chart-area{margin-top:4px;}
+#rl-chart{width:100%;height:120px;}
+
+.facility-item{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 0;border-bottom:1px solid var(--border);
+  font-size:12px;
+}
+.facility-item:last-child{border-bottom:none;}
+.fac-dot{width:8px;height:8px;border-radius:50%;background:var(--accent4);flex-shrink:0;}
+.fac-info{flex:1;}
+.fac-node{font-family:var(--mono);font-size:11px;color:var(--accent4);}
+.fac-meta{color:var(--muted);font-size:11px;}
+
+/* ── Legend ── */
+.legend{display:flex;gap:12px;flex-wrap:wrap;padding:10px 16px;
+  border-top:1px solid var(--border);background:var(--surface);}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);}
+.legend-dot{width:8px;height:8px;border-radius:50%;}
+
+/* ── Loading overlay ── */
+#loader{
+  position:absolute;inset:0;background:rgba(13,15,20,.8);
+  display:none;align-items:center;justify-content:center;
+  flex-direction:column;gap:12px;z-index:50;
+}
+#loader.active{display:flex;}
+.spinner{
+  width:36px;height:36px;border:3px solid var(--border);
+  border-top-color:var(--accent);border-radius:50%;
+  animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-text{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:2px;}
+
+/* ── Tooltip ── */
+.tooltip{
+  position:absolute;background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:10px 14px;font-size:12px;
+  pointer-events:none;opacity:0;transition:opacity .15s;
+  max-width:180px;z-index:200;
+}
+.tooltip.visible{opacity:1;}
+.tooltip-name{font-family:var(--mono);color:var(--accent);font-size:11px;margin-bottom:4px;}
+.tooltip-row{color:var(--muted);line-height:1.7;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    <span class="logo-text">PAI Urban Agent</span>
+  </div>
+  <div class="header-meta">Divya Battu · M Sarayu &nbsp;|&nbsp; AI Lab Demo</div>
+</header>
+
+<div class="layout">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sidebar-section">Modules</div>
+
+    <div class="tab active" data-tab="routing" onclick="switchTab('routing',this)">
+      <div class="tab-icon" style="background:rgba(0,229,195,.12);">🗺</div>
+      Search Routing
+      <span class="tab-badge">BFS/UCS/A*</span>
+    </div>
+    <div class="tab" data-tab="csp" onclick="switchTab('csp',this)">
+      <div class="tab-icon" style="background:rgba(255,209,102,.12);">📍</div>
+      Facility CSP
+    </div>
+    <div class="tab" data-tab="adversarial" onclick="switchTab('adversarial',this)">
+      <div class="tab-icon" style="background:rgba(255,107,107,.12);">⚔️</div>
+      Adversarial
+    </div>
+    <div class="tab" data-tab="rl" onclick="switchTab('rl',this)">
+      <div class="tab-icon" style="background:rgba(108,124,255,.12);">🧠</div>
+      Q-Learning
+    </div>
+
+    <div class="config">
+      <div class="config-title">Configuration</div>
+      <div id="config-routing">
+        <div class="form-row">
+          <label class="form-label">Algorithm</label>
+          <select id="algo">
+            <option value="astar">A* (recommended)</option>
+            <option value="ucs">UCS / Dijkstra</option>
+            <option value="bfs">BFS</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Start Node</label>
+          <input type="number" id="start-node" value="0" min="0" max="17"/>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Goal Node</label>
+          <input type="number" id="goal-node" value="12" min="0" max="17"/>
+        </div>
+        <button class="run-btn" onclick="runSearch()">▶ RUN SEARCH</button>
+      </div>
+
+      <div id="config-csp" style="display:none">
+        <div class="form-row">
+          <label class="form-label">Facilities to Place (k)</label>
+          <input type="number" id="csp-k" value="3" min="1" max="6"/>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Min Separation: <span id="sep-val">2.5</span></label>
+          <input type="range" id="csp-sep" min="1" max="5" step="0.5" value="2.5"
+                 oninput="document.getElementById('sep-val').textContent=this.value"/>
+        </div>
+        <button class="run-btn" onclick="runCSP()">▶ PLACE FACILITIES</button>
+      </div>
+
+      <div id="config-adversarial" style="display:none">
+        <div class="form-row">
+          <label class="form-label">Start Node</label>
+          <input type="number" id="adv-start" value="0" min="0" max="17"/>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Goal Node</label>
+          <input type="number" id="adv-goal" value="10" min="0" max="17"/>
+        </div>
+        <button class="run-btn" onclick="runAdversarial()">▶ RUN MINIMAX</button>
+      </div>
+
+      <div id="config-rl" style="display:none">
+        <div class="form-row">
+          <label class="form-label">Goal Node</label>
+          <input type="number" id="rl-goal" value="15" min="0" max="17"/>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Episodes: <span id="ep-val">400</span></label>
+          <input type="range" id="rl-eps" min="100" max="800" step="100" value="400"
+                 oninput="document.getElementById('ep-val').textContent=this.value"/>
+        </div>
+        <button class="run-btn" onclick="runRL()">▶ TRAIN AGENT</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main Canvas ── -->
+  <main class="main" style="position:relative;overflow:hidden;">
+    <div class="canvas-header">
+      <span class="canvas-title" id="canvas-title">CITY GRAPH — CLICK NODES TO SET START/GOAL</span>
+      <span class="status-chip" id="status-chip">Idle</span>
+    </div>
+    <svg id="city" viewBox="0 0 700 520" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5"
+                markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="currentColor"
+                stroke-width="1.5" stroke-linecap="round"/>
+        </marker>
+      </defs>
+      <g id="edges-layer"></g>
+      <g id="nodes-layer"></g>
+    </svg>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#4a90d9"></div>Residential</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f5a623"></div>Commercial</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#888"></div>Industrial</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#d0021b"></div>Medical</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#417505"></div>Park</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>Start</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent3)"></div>Goal</div>
+    </div>
+    <div id="loader">
+      <div class="spinner"></div>
+      <div class="loader-text" id="loader-msg">COMPUTING…</div>
+    </div>
+  </main>
+
+  <!-- ── Right Panel ── -->
+  <aside class="panel">
+    <div class="panel-header" id="panel-title">Search Results</div>
+    <div class="panel-body" id="panel-body">
+      <div class="explain-box">
+        <div class="explain-title">Ready</div>
+        <div class="explain-line">Select a module, configure parameters, and click Run to see results and explanations here.</div>
+      </div>
+    </div>
+  </aside>
+
+</div>
+
+<!-- Tooltip -->
+<div class="tooltip" id="tooltip">
+  <div class="tooltip-name" id="tt-name"></div>
+  <div class="tooltip-row" id="tt-zone"></div>
+  <div class="tooltip-row" id="tt-pop"></div>
+</div>
+
+<script>
+const API = 'http://localhost:5001/api';
+const ZONE_COLORS = {
+  residential:'#4a90d9', commercial:'#f5a623',
+  industrial:'#888', medical:'#d0021b', park:'#417505'
+};
+
+let graphData = null;
+let currentTab = 'routing';
+let clickMode = null; // 'start' or 'goal' or null
+let pathNodes = new Set();
+
+// ── Fetch graph and draw ──────────────────────────────────────────────────────
+async function loadGraph(){
+  try{
+    const r = await fetch(`${API}/graph`);
+    graphData = await r.json();
+    drawGraph();
+    setStatus('ok','Graph loaded');
+  } catch(e){
+    setStatus('err','Backend offline — start app.py');
+    document.getElementById('panel-body').innerHTML = `
+      <div class="explain-box">
+        <div class="explain-title">⚠ Backend not running</div>
+        <div class="explain-line highlight">Start the backend:</div>
+        <div class="explain-line"><code>cd backend && python app.py</code></div>
+        <div class="explain-line" style="margin-top:8px">Then refresh this page.</div>
+      </div>`;
+  }
+}
+
+function toSVG(x, y){
+  return { sx: 50 + x * 66, sy: 480 - y * 52 };
+}
+
+function drawGraph(pathEdges=[], facilityNodes=[], highlightNodes={}){
+  if(!graphData) return;
+  const eL = document.getElementById('edges-layer');
+  const nL = document.getElementById('nodes-layer');
+  eL.innerHTML=''; nL.innerHTML='';
+
+  // Edges
+  graphData.edges.forEach(e=>{
+    const {sx:x1,sy:y1}=toSVG(...graphData.nodes[e.source].x?[graphData.nodes.find(n=>n.id===e.source).x,graphData.nodes.find(n=>n.id===e.source).y]:[graphData.nodes[e.source].x,graphData.nodes[e.source].y]);
+    const sn=graphData.nodes.find(n=>n.id===e.source);
+    const gn=graphData.nodes.find(n=>n.id===e.target);
+    const {sx:x2,sy:y2}=toSVG(gn.x,gn.y);
+    const {sx:sx1,sy:sy1}=toSVG(sn.x,sn.y);
+    const isPath = pathEdges.some(pe=>pe[0]===e.source&&pe[1]===e.target);
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',sx1); line.setAttribute('y1',sy1);
+    line.setAttribute('x2',x2); line.setAttribute('y2',y2);
+    line.classList.add('graph-edge');
+    if(isPath) line.classList.add('path-edge');
+    else if(e.congestion>2) line.classList.add('congested');
+    eL.appendChild(line);
+  });
+
+  // Nodes
+  graphData.nodes.forEach(n=>{
+    const {sx,sy}=toSVG(n.x,n.y);
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.classList.add('graph-node');
+    if(highlightNodes[n.id]==='start') g.classList.add('start');
+    if(highlightNodes[n.id]==='goal')  g.classList.add('goal');
+    if(facilityNodes.includes(n.id))   g.classList.add('facility');
+
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx',sx); c.setAttribute('cy',sy); c.setAttribute('r',pathNodes.has(n.id)?9:7);
+    c.setAttribute('fill', ZONE_COLORS[n.zone]||'#888');
+    c.setAttribute('stroke','#2a3045');
+    g.appendChild(c);
+
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',sx); t.setAttribute('y',sy+1);
+    t.setAttribute('text-anchor','middle');t.setAttribute('dominant-baseline','central');
+    t.classList.add('node-label');
+    t.textContent=n.id;
+    g.appendChild(t);
+
+    g.addEventListener('mouseenter',ev=>showTooltip(ev,n));
+    g.addEventListener('mouseleave',hideTooltip);
+    g.addEventListener('click',()=>nodeClicked(n.id));
+    nL.appendChild(g);
+  });
+}
+
+function nodeClicked(id){
+  const tab=currentTab;
+  if(tab==='routing'){
+    const s=parseInt(document.getElementById('start-node').value);
+    const g=parseInt(document.getElementById('goal-node').value);
+    // Toggle: if id=start keep, else if different set goal
+    if(id===s){ document.getElementById('goal-node').value=id; }
+    else { document.getElementById('goal-node').value=id; }
+  }
+}
+
+function showTooltip(ev, n){
+  const tt=document.getElementById('tooltip');
+  const rect=document.getElementById('city').getBoundingClientRect();
+  const {sx,sy}=toSVG(n.x,n.y);
+  const scaleX=rect.width/700; const scaleY=rect.height/520;
+  tt.style.left=(rect.left+sx*scaleX+14)+'px';
+  tt.style.top=(rect.top+sy*scaleY-10)+'px';
+  document.getElementById('tt-name').textContent=`Node ${n.id}`;
+  document.getElementById('tt-zone').textContent=`Zone: ${n.zone}`;
+  document.getElementById('tt-pop').textContent=`Population: ${n.population.toLocaleString()}`;
+  tt.classList.add('visible');
+}
+function hideTooltip(){ document.getElementById('tooltip').classList.remove('visible'); }
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function switchTab(tab, el){
+  currentTab=tab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  ['routing','csp','adversarial','rl'].forEach(t=>{
+    document.getElementById(`config-${t}`).style.display = t===tab?'block':'none';
+  });
+  const titles={routing:'Search Results',csp:'Facility Placement',
+                adversarial:'Adversarial Reasoning',rl:'Q-Learning'};
+  document.getElementById('panel-title').textContent=titles[tab];
+  drawGraph(); pathNodes=new Set();
+}
+
+function setStatus(state,msg){
+  const chip=document.getElementById('status-chip');
+  chip.textContent=msg;
+  chip.className='status-chip'+(state==='ok'?' ok':state==='running'?' running':'');
+}
+function showLoader(msg='COMPUTING…'){
+  document.getElementById('loader-msg').textContent=msg;
+  document.getElementById('loader').classList.add('active');
+  document.querySelector('.run-btn:not([style*="none"])').disabled=true;
+}
+function hideLoader(){
+  document.getElementById('loader').classList.remove('active');
+  document.querySelectorAll('.run-btn').forEach(b=>b.disabled=false);
+}
+
+// ── Search ────────────────────────────────────────────────────────────────────
+async function runSearch(){
+  const algo=document.getElementById('algo').value;
+  const start=parseInt(document.getElementById('start-node').value);
+  const goal=parseInt(document.getElementById('goal-node').value);
+  showLoader('SEARCHING…');
+  setStatus('running','Running…');
+  try{
+    const r=await fetch(`${API}/search`,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({algorithm:algo,start,goal})});
+    const d=await r.json();
+    const path=d.path||[];
+    pathNodes=new Set(path);
+    const pathEdges=path.slice(0,-1).map((n,i)=>[n,path[i+1]]);
+    drawGraph(pathEdges,[],{[start]:'start',[goal]:'goal'});
+    renderSearchResults(d,algo,start,goal);
+    setStatus('ok',`${algo.toUpperCase()} complete`);
+  }catch(e){ setStatus('err','Error'); }
+  finally{ hideLoader(); }
+}
+
+function renderSearchResults(d,algo,start,goal){
+  const algoNames={bfs:'BFS',ucs:'UCS (Dijkstra)',astar:'A*'};
+  const path=d.path||[];
+  const pathHtml=path.map((n,i)=>
+    `<span class="path-node">${n}</span>${i<path.length-1?'<span class="path-arrow">→</span>':''}`
+  ).join('');
+
+  document.getElementById('panel-body').innerHTML=`
+    <div class="metric-row">
+      <div class="metric">
+        <div class="metric-label">COST</div>
+        <div class="metric-value">${d.cost}</div>
+        <div class="metric-sub">travel time units</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">EXPANDED</div>
+        <div class="metric-value">${d.expanded}</div>
+        <div class="metric-sub">nodes searched</div>
+      </div>
+    </div>
+    <div class="metric-row">
+      <div class="metric">
+        <div class="metric-label">LENGTH</div>
+        <div class="metric-value">${path.length-1}</div>
+        <div class="metric-sub">hops</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">TIME</div>
+        <div class="metric-value" style="font-size:14px">${d.time_ms}ms</div>
+        <div class="metric-sub">compute time</div>
+      </div>
+    </div>
+    <div class="explain-box">
+      <div class="explain-title">Path found</div>
+      <div class="path-steps">${pathHtml}</div>
+    </div>
+    <div class="explain-box">
+      <div class="explain-title">Explanation</div>
+      ${(d.explanation||[]).map(l=>`<div class="explain-line">${l}</div>`).join('')}
+    </div>
+  `;
+}
+
+// ── CSP ───────────────────────────────────────────────────────────────────────
+async function runCSP(){
+  const k=parseInt(document.getElementById('csp-k').value);
+  const sep=parseFloat(document.getElementById('csp-sep').value);
+  showLoader('SOLVING CSP…');
+  setStatus('running','CSP solving…');
+  try{
+    const r=await fetch(`${API}/csp`,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({k,min_separation:sep})});
+    const d=await r.json();
+    drawGraph([],d.placed||[]);
+    renderCSPResults(d,k);
+    setStatus('ok','CSP solved');
+  }catch(e){ setStatus('err','Error'); }
+  finally{ hideLoader(); }
+}
+
+function renderCSPResults(d,k){
+  const facHtml=(d.explanation||[]).map(e=>`
+    <div class="facility-item">
+      <div class="fac-dot"></div>
+      <div class="fac-info">
+        <div class="fac-node">Node ${e.node} — ${e.zone}</div>
+        <div class="fac-meta">Covers ${e.covers} nodes · Pop ${e.population.toLocaleString()}</div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('panel-body').innerHTML=`
+    <div class="metric-row">
+      <div class="metric">
+        <div class="metric-label">COVERAGE</div>
+        <div class="metric-value">${d.score?.toLocaleString()}</div>
+        <div class="metric-sub">population reached</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">TRIED</div>
+        <div class="metric-value">${d.tried}</div>
+        <div class="metric-sub">backtracks</div>
+      </div>
+    </div>
+    <div class="explain-box">
+      <div class="explain-title">Placed Facilities (★)</div>
+      ${facHtml}
+    </div>
+    <div class="explain-box">
+      <div class="explain-title">CSP Explanation</div>
+      <div class="explain-line">Backtracking CSP with forward-checking. ${k} facilities placed under constraints: eligible zone type, min separation ${document.getElementById('csp-sep').value}, maximise population coverage.</div>
+    </div>
+  `;
+}
+
+// ── Adversarial ───────────────────────────────────────────────────────────────
+async function runAdversarial(){
+  const start=parseInt(document.getElementById('adv-start').value);
+  const goal=parseInt(document.getElementById('adv-goal').value);
+  showLoader('MINIMAX…');
+  setStatus('running','Minimax search…');
+  try{
+    const r=await fetch(`${API}/adversarial`,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({start,goal})});
+    const d=await r.json();
+    const path=d.path||[];
+    pathNodes=new Set(path);
+    const pEdges=path.slice(0,-1).map((n,i)=>[n,path[i+1]]);
+    drawGraph(pEdges,[],{[start]:'start',[goal]:'goal'});
+    renderAdvResults(d,start,goal);
+    setStatus('ok','Minimax done');
+  }catch(e){ setStatus('err','Error'); }
+  finally{ hideLoader(); }
+}
+
+function renderAdvResults(d,start,goal){
+  const path=d.path||[];
+  const pathHtml=path.map((n,i)=>
+    `<span class="path-node">${n}</span>${i<path.length-1?'<span class="path-arrow">→</span>':''}`
+  ).join('');
+  document.getElementById('panel-body').innerHTML=`
+    <div class="metric-row">
+      <div class="metric">
+        <div class="metric-label">MINIMAX VALUE</div>
+        <div class="metric-value">${d.value}</div>
+        <div class="metric-sub">worst-case cost</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">PATH LENGTH</div>
+        <div class="metric-value">${Math.max(0,path.length-1)}</div>
+        <div class="metric-sub">hops</div>
+      </div>
+    </div>
+    <div class="explain-box">
+      <div class="explain-title">Agent's path (minimax-optimal)</div>
+      <div class="path-steps">${pathHtml||'<span class="explain-line">No direct path found</span>'}</div>
+    </div>
+    <div class="explain-box">
+      <div class="explain-title">Search log</div>
+      ${(d.log||[]).map(l=>`<div class="explain-line" style="font-family:var(--mono);font-size:10px">${l}</div>`).join('')}
+    </div>
+    <div class="explain-box">
+      <div class="explain-title">Explanation</div>
+      <div class="explain-line">MAX player (agent) minimises travel time. MIN player (adversary) multiplies chosen edge weights ×2.2. α-β pruning eliminates branches that cannot affect the outcome.</div>
+    </div>
+  `;
+}
+
+// ── RL ────────────────────────────────────────────────────────────────────────
+async function runRL(){
+  const goal=parseInt(document.getElementById('rl-goal').value);
+  const eps=parseInt(document.getElementById('rl-eps').value);
+  showLoader('TRAINING Q-AGENT…');
+  setStatus('running','Training…');
+  try{
+    const r=await fetch(`${API}/rl`,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({goal,episodes:eps})});
+    const d=await r.json();
+    const path=d.path||[];
+    pathNodes=new Set(path);
+    const pEdges=path.slice(0,-1).map((n,i)=>[n,path[i+1]]);
+    drawGraph(pEdges,[],{[path[0]]:'start',[goal]:'goal'});
+    renderRLResults(d,goal,eps);
+    setStatus('ok','Training complete');
+  }catch(e){ setStatus('err','Error'); }
+  finally{ hideLoader(); }
+}
+
+function renderRLResults(d,goal,eps){
+  const path=d.path||[];
+  const pathHtml=path.map((n,i)=>
+    `<span class="path-node">${n}</span>${i<path.length-1?'<span class="path-arrow">→</span>':''}`
+  ).join('');
+
+  document.getElementById('panel-body').innerHTML=`
+    <div class="metric-row">
+      <div class="metric">
+        <div class="metric-label">EPISODES</div>
+        <div class="metric-value">${eps}</div>
+        <div class="metric-sub">training rounds</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">PATH</div>
+        <div class="metric-value">${Math.max(0,path.length-1)}</div>
+        <div class="metric-sub">hops to goal</div>
+      </div>
+    </div>
+    <div class="explain-box">
+      <div class="explain-title">Learned policy — greedy path</div>
+      <div class="path-steps">${pathHtml}</div>
+    </div>
+    <div class="explain-box">
+      <div class="explain-title">Reward convergence</div>
+      <canvas id="rl-chart"></canvas>
+    </div>
+    <div class="explain-box">
+      <div class="explain-title">Explanation</div>
+      <div class="explain-line">Q-learning with α=0.3, γ=0.9, ε=0.25. Edge weights change dynamically every 60 episodes. Agent learned to navigate under congestion via trial-and-error reward signals.</div>
+    </div>
+  `;
+  // Draw reward chart
+  setTimeout(()=>drawChart(d.smoothed||[]),50);
+}
+
+function drawChart(smoothed){
+  const canvas=document.getElementById('rl-chart');
+  if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+  canvas.width=canvas.offsetWidth||260;
+  canvas.height=120;
+  const w=canvas.width, h=canvas.height;
+  const min=Math.min(...smoothed), max=Math.max(...smoothed);
+  const range=max-min||1;
+  ctx.clearRect(0,0,w,h);
+  ctx.strokeStyle='#00e5c3'; ctx.lineWidth=2;
+  ctx.beginPath();
+  smoothed.forEach((v,i)=>{
+    const x=i/(smoothed.length-1)*w;
+    const y=h-(v-min)/range*(h-10)-5;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  // Axes
+  ctx.strokeStyle='#2a3045'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(0,h-1); ctx.lineTo(w,h-1); ctx.stroke();
+  ctx.fillStyle='#7a8099'; ctx.font='9px Space Mono';
+  ctx.fillText('Episodes →', w-70, h-3);
+  ctx.fillText('Reward ↑', 2, 10);
+}
+
+loadGraph();
+</script>
+</body>
+</html>
