@@ -1,0 +1,36 @@
+{
+  "cost": 2.87,
+  "expanded": 3,
+  "explanation": [
+    "Algorithm: A*",
+    "Route: 0 \u2192 15 (1 hops)",
+    "Total travel time: 2.87 units",
+    "Nodes expanded: 3  |  Time: 0.5232ms",
+    "Strategy: Used straight-line (Euclidean) heuristic to guide expansion toward goal. Guaranteed optimal because heuristic is admissible (never overestimates)."
+  ],
+  "path": [
+    0,
+    15
+  ],
+  "steps": [
+    {
+      "action": "expand",
+      "g": 0,
+      "h": 2.62,
+      "node": 0
+    },
+    {
+      "action": "expand",
+      "g": 0.5,
+      "h": 2.27,
+      "node": 2
+    },
+    {
+      "action": "expand",
+      "g": 2.87,
+      "h": 0.0,
+      "node": 15
+    }
+  ],
+  "time_ms": 0.5232
+}

@@ -1,0 +1,29 @@
+{
+  "explanation": [
+    {
+      "covers": 5,
+      "node": 4,
+      "population": 13432,
+      "zone": "medical"
+    },
+    {
+      "covers": 8,
+      "node": 5,
+      "population": 14558,
+      "zone": "residential"
+    },
+    {
+      "covers": 4,
+      "node": 7,
+      "population": 12805,
+      "zone": "residential"
+    }
+  ],
+  "placed": [
+    4,
+    5,
+    7
+  ],
+  "score": 31940,
+  "tried": 116
+}

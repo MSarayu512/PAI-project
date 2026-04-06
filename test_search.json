@@ -1,0 +1,290 @@
+{
+  "cost": 22.64,
+  "expanded": 351,
+  "explanation": [
+    "Algorithm: A*",
+    "Route: 0 \u2192 58 \u2192 569 \u2192 43 \u2192 882 \u2192 636 \u2192 286 \u2192 931 \u2192 1362 \u2192 1388 \u2192 814 \u2192 758 \u2192 1108 \u2192 1391 \u2192 872 \u2192 587 \u2192 602 \u2192 1 \u2192 71 \u2192 32 \u2192 661 \u2192 41 \u2192 1202 \u2192 859 \u2192 29 \u2192 19 \u2192 26 \u2192 550 \u2192 1168 \u2192 1241 \u2192 61 \u2192 62 \u2192 1317 \u2192 15 (33 hops)",
+    "Total travel time: 22.64 units",
+    "Nodes expanded: 351  |  Time: 2.7302ms",
+    "Strategy: Used straight-line (Euclidean) heuristic to guide expansion toward goal. Guaranteed optimal because heuristic is admissible (never overestimates)."
+  ],
+  "path": [
+    0,
+    58,
+    569,
+    43,
+    882,
+    636,
+    286,
+    931,
+    1362,
+    1388,
+    814,
+    758,
+    1108,
+    1391,
+    872,
+    587,
+    602,
+    1,
+    71,
+    32,
+    661,
+    41,
+    1202,
+    859,
+    29,
+    19,
+    26,
+    550,
+    1168,
+    1241,
+    61,
+    62,
+    1317,
+    15
+  ],
+  "steps": [
+    {
+      "action": "expand",
+      "g": 0,
+      "h": 3.28,
+      "node": 0
+    },
+    {
+      "action": "expand",
+      "g": 1.08,
+      "h": 3.45,
+      "node": 163
+    },
+    {
+      "action": "expand",
+      "g": 1.55,
+      "h": 3.64,
+      "node": 58
+    },
+    {
+      "action": "expand",
+      "g": 1.85,
+      "h": 3.55,
+      "node": 954
+    },
+    {
+      "action": "expand",
+      "g": 1.9,
+      "h": 3.63,
+      "node": 845
+    },
+    {
+      "action": "expand",
+      "g": 2.6,
+      "h": 3.76,
+      "node": 569
+    },
+    {
+      "action": "expand",
+      "g": 2.88,
+      "h": 3.58,
+      "node": 48
+    },
+    {
+      "action": "expand",
+      "g": 2.68,
+      "h": 3.91,
+      "node": 42
+    },
+    {
+      "action": "expand",
+      "g": 2.99,
+      "h": 3.9,
+      "node": 162
+    },
+    {
+      "action": "expand",
+      "g": 3.22,
+      "h": 3.8,
+      "node": 850
+    },
+    {
+      "action": "expand",
+      "g": 4.08,
+      "h": 3.4,
+      "node": 43
+    },
+    {
+      "action": "expand",
+      "g": 4.47,
+      "h": 3.31,
+      "node": 882
+    },
+    {
+      "action": "expand",
+      "g": 3.89,
+      "h": 4.14,
+      "node": 932
+    },
+    {
+      "action": "expand",
+      "g": 5.0,
+      "h": 3.18,
+      "node": 636
+    },
+    {
+      "action": "expand",
+      "g": 4.75,
+      "h": 3.44,
+      "node": 47
+    },
+    {
+      "action": "expand",
+      "g": 4.92,
+      "h": 3.33,
+      "node": 883
+    },
+    {
+      "action": "expand",
+      "g": 4.49,
+      "h": 3.96,
+      "node": 1280
+    },
+    {
+      "action": "expand",
+      "g": 5.1,
+      "h": 3.38,
+      "node": 51
+    },
+    {
+      "action": "expand",
+      "g": 4.99,
+      "h": 3.49,
+      "node": 799
+    },
+    {
+      "action": "expand",
+      "g": 5.34,
+      "h": 3.23,
+      "node": 776
+    },
+    {
+      "action": "expand",
+      "g": 5.13,
+      "h": 3.45,
+      "node": 778
+    },
+    {
+      "action": "expand",
+      "g": 5.54,
+      "h": 3.06,
+      "node": 286
+    },
+    {
+      "action": "expand",
+      "g": 5.18,
+      "h": 3.52,
+      "node": 616
+    },
+    {
+      "action": "expand",
+      "g": 5.23,
+      "h": 3.51,
+      "node": 153
+    },
+    {
+      "action": "expand",
+      "g": 4.74,
+      "h": 4.02,
+      "node": 1279
+    },
+    {
+      "action": "expand",
+      "g": 4.66,
+      "h": 4.18,
+      "node": 1383
+    },
+    {
+      "action": "expand",
+      "g": 5.85,
+      "h": 3.01,
+      "node": 931
+    },
+    {
+      "action": "expand",
+      "g": 5.4,
+      "h": 3.52,
+      "node": 777
+    },
+    {
+      "action": "expand",
+      "g": 5.73,
+      "h": 3.21,
+      "node": 611
+    },
+    {
+      "action": "expand",
+      "g": 6.05,
+      "h": 2.96,
+      "node": 1362
+    },
+    {
+      "action": "expand",
+      "g": 5.79,
+      "h": 3.26,
+      "node": 811
+    },
+    {
+      "action": "expand",
+      "g": 5.82,
+      "h": 3.27,
+      "node": 881
+    },
+    {
+      "action": "expand",
+      "g": 5.58,
+      "h": 3.51,
+      "node": 287
+    },
+    {
+      "action": "expand",
+      "g": 6.19,
+      "h": 2.93,
+      "node": 1361
+    },
+    {
+      "action": "expand",
+      "g": 6.23,
+      "h": 2.94,
+      "node": 1388
+    },
+    {
+      "action": "expand",
+      "g": 5.99,
+      "h": 3.29,
+      "node": 291
+    },
+    {
+      "action": "expand",
+      "g": 6.4,
+      "h": 2.94,
+      "node": 1360
+    },
+    {
+      "action": "expand",
+      "g": 6.24,
+      "h": 3.16,
+      "node": 812
+    },
+    {
+      "action": "expand",
+      "g": 5.9,
+      "h": 3.52,
+      "node": 288
+    },
+    {
+      "action": "expand",
+      "g": 5.82,
+      "h": 3.61,
+      "node": 154
+    }
+  ],
+  "time_ms": 2.7302
+}

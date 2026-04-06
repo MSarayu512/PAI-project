@@ -7,6 +7,7 @@ from flask_cors import CORS
 import heapq, random, math, time
 from collections import deque, defaultdict
 import networkx as nx
+import osmnx as ox
 
 app = Flask(__name__)
 CORS(app)
@@ -16,33 +17,52 @@ random.seed(42)
 ZONE_TYPES = ['residential', 'commercial', 'industrial', 'medical', 'park']
 
 def build_city():
+    # MG Road, Bangalore coordinates: (12.9716, 77.5946)
+    # Fetch a driving network within 1.5km
+    G_osm = ox.graph_from_point((12.9716, 77.5946), dist=1500, network_type='drive')
+    
+    # Get largest strongly connected component so paths always exist safely
+    comps = sorted(nx.strongly_connected_components(G_osm), key=len, reverse=True)
+    G_osm = G_osm.subgraph(comps[0]).copy()
+    
     G = nx.DiGraph()
-    n = 18
-    positions = {}
-    for i in range(n):
-        x, y = random.uniform(1, 9), random.uniform(1, 9)
+    
+    # Map OSmnx graph IDs to simpler integer IDs 0, 1, 2...
+    node_mapping = {old_id: new_id for new_id, old_id in enumerate(G_osm.nodes())}
+    
+    # Get min/max lat lon for scaling to 1-9 grid to match frontend expectations
+    xs = [data['x'] for n, data in G_osm.nodes(data=True)]
+    ys = [data['y'] for n, data in G_osm.nodes(data=True)]
+    min_x, max_x = min(xs), max(xs)
+    min_y, max_y = min(ys), max(ys)
+    
+    diff_x = max_x - min_x + 1e-9
+    diff_y = max_y - min_y + 1e-9
+    max_diff = max(diff_x, diff_y)
+
+    for old_id, data in G_osm.nodes(data=True):
+        new_id = node_mapping[old_id]
+        # scale uniformly to max 8 range to preserve aspect ratio
+        scale_x = ((data['x'] - min_x) / max_diff * 8) + 1
+        scale_y = ((data['y'] - min_y) / max_diff * 8) + 1
+        
         zone = random.choice(ZONE_TYPES)
         pop  = random.randint(200, 5000)
-        G.add_node(i, pos=(round(x,2), round(y,2)), zone=zone, population=pop)
-        positions[i] = (round(x,2), round(y,2))
-    added = set()
-    for i in range(n):
-        for j in range(i+1, n):
-            xi,yi = G.nodes[i]['pos']
-            xj,yj = G.nodes[j]['pos']
-            d = math.hypot(xi-xj, yi-yj)
-            if d < 4.2 and (i,j) not in added:
-                w = round(d * random.uniform(0.9,1.4), 2)
-                c = round(random.uniform(1.0, 2.8), 2)
-                G.add_edge(i, j, weight=w, congestion=c)
-                G.add_edge(j, i, weight=w, congestion=c)
-                added.add((i,j))
-    # ensure connectivity
-    comps = list(nx.weakly_connected_components(G))
-    for c in comps[1:]:
-        a = list(comps[0])[0]; b = list(c)[0]
-        G.add_edge(a,b,weight=5.0,congestion=1.0)
-        G.add_edge(b,a,weight=5.0,congestion=1.0)
+        G.add_node(new_id, pos=(round(scale_x, 4), round(scale_y, 4)), zone=zone, population=pop)
+
+    for u, v, k, data in G_osm.edges(keys=True, data=True):
+        new_u = node_mapping[u]
+        new_v = node_mapping[v]
+        # Use length (in meters) as weight, scaled down
+        w = round(data.get('length', 10.0) / 100.0, 2)
+        c = round(random.uniform(1.0, 2.8), 2)
+        
+        if G.has_edge(new_u, new_v):
+            if w < G[new_u][new_v]['weight']:
+                G[new_u][new_v]['weight'] = w
+        else:
+            G.add_edge(new_u, new_v, weight=w, congestion=c)
+            
     return G
 
 G = build_city()
@@ -189,6 +209,8 @@ def _explain_routing(algo, start, goal, path, cost, expanded, elapsed):
 
 def _csp(k=3, min_sep=2.5):
     candidates=[n for n in G.nodes if G.nodes[n]['zone'] in ('medical','commercial','residential')]
+    if len(candidates) > 30:
+        candidates = random.sample(candidates, 30)
     best={'placed':[],'score':-1,'tried':0}
 
     def coverage(placed):
@@ -301,4 +323,4 @@ def _qlearn(goal=15,episodes=400):
     return {"path":path,"rewards":rewards[::5],"smoothed":smooth[::5],"episodes":episodes}
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    app.run(debug=True, use_reloader=False, port=5001)

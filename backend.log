@@ -1,0 +1,23 @@
+ * Serving Flask app 'backend_app'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5001
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [05/Apr/2026 23:53:57] "POST /api/csp HTTP/1.1" 200 -
+127.0.0.1 - - [05/Apr/2026 23:53:57] "POST /api/rl HTTP/1.1" 200 -
+127.0.0.1 - - [05/Apr/2026 23:54:26] "POST /api/csp HTTP/1.1" 200 -
+127.0.0.1 - - [05/Apr/2026 23:54:27] "POST /api/rl HTTP/1.1" 200 -
+127.0.0.1 - - [05/Apr/2026 23:54:27] "POST /api/adversarial HTTP/1.1" 200 -
+127.0.0.1 - - [05/Apr/2026 23:55:20] "[36mGET / HTTP/1.1[0m" 304 -
+127.0.0.1 - - [05/Apr/2026 23:55:20] "GET /api/graph HTTP/1.1" 200 -
+127.0.0.1 - - [05/Apr/2026 23:55:45] "POST /api/search HTTP/1.1" 200 -
+127.0.0.1 - - [05/Apr/2026 23:56:02] "POST /api/search HTTP/1.1" 200 -
+127.0.0.1 - - [05/Apr/2026 23:56:08] "POST /api/search HTTP/1.1" 200 -
+127.0.0.1 - - [05/Apr/2026 23:56:13] "POST /api/search HTTP/1.1" 200 -
+127.0.0.1 - - [05/Apr/2026 23:56:17] "POST /api/search HTTP/1.1" 200 -
+127.0.0.1 - - [05/Apr/2026 23:56:21] "POST /api/search HTTP/1.1" 200 -
+127.0.0.1 - - [06/Apr/2026 00:01:55] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [06/Apr/2026 00:01:55] "GET /api/graph HTTP/1.1" 200 -
+127.0.0.1 - - [06/Apr/2026 00:02:17] "POST /api/adversarial HTTP/1.1" 200 -
+127.0.0.1 - - [06/Apr/2026 00:02:31] "POST /api/adversarial HTTP/1.1" 200 -
+127.0.0.1 - - [06/Apr/2026 00:02:55] "POST /api/search HTTP/1.1" 200 -
