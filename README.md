@@ -1,7 +1,5 @@
 # PAI Urban Agent: City Decision Dashboard
 
-**Team Members:** Divya Battu (230968042), M Sarayu (230968052)
-
 A Rational AI Agent simulation environment for city decision-making tasks, built as part of the Principles of Artificial Intelligence Lab. This project leverages classical AI search algorithms, constraint satisfaction, adversarial reasoning, and reinforcement learning on actual real-world transit layouts to demonstrate optimal operations in dynamically changing urban environments.
 
 ## Overview
